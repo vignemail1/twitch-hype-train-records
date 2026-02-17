@@ -134,25 +134,35 @@ class HypeTrainAPI {
         }
 
         try {
-            const response = await fetch(
-                `${CONFIG.apiBaseUrl}/hypetrain/status?broadcaster_id=${this.auth.userId}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${this.auth.accessToken}`,
-                        'Client-Id': CONFIG.clientId
-                    }
+            const url = `${CONFIG.apiBaseUrl}/hypetrain/status?broadcaster_id=${this.auth.userId}`;
+            console.log('🚂 Appel API Hype Train:', url);
+            
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${this.auth.accessToken}`,
+                    'Client-Id': CONFIG.clientId
                 }
-            );
+            });
+
+            console.log('📊 Statut réponse:', response.status, response.statusText);
 
             if (!response.ok) {
                 const errorData = await response.json();
+                console.error('❌ Erreur API:', errorData);
                 throw new Error(errorData.message || 'Erreur API');
             }
 
             const data = await response.json();
+            console.log('✅ Données Hype Train reçues:', data);
+            console.log('📦 Nombre d\'événements:', data.data?.length || 0);
+            
+            if (data.data && data.data.length > 0) {
+                console.log('🎉 Premier événement:', data.data[0]);
+            }
+            
             return data.data;
         } catch (error) {
-            console.error('Erreur lors de la récupération du Hype Train:', error);
+            console.error('💥 Erreur lors de la récupération du Hype Train:', error);
             throw error;
         }
     }
@@ -240,17 +250,29 @@ class UI {
 
     // Affiche les données du Hype Train avec la nouvelle structure API
     displayHypeTrainData(statusData) {
+        console.log('🎨 Affichage des données Hype Train:', statusData);
+        
         if (!statusData || statusData.length === 0) {
-            this.elements.currentTrainContent.innerHTML = '<p class="text-muted">Aucun Hype Train récent</p>';
-            this.elements.allTimeHigh.textContent = 'Aucune donnée';
-            this.elements.sharedAllTimeHigh.textContent = 'Aucune donnée';
+            console.log('ℹ️ Aucune donnée Hype Train disponible');
+            this.elements.currentTrainContent.innerHTML = `
+                <div class="info-box">
+                    <p class="text-muted">ℹ️ Aucun Hype Train récent</p>
+                    <p class="text-small">L'API Twitch ne retourne que les Hype Trains en cours ou très récents. L'historique complet n'est pas disponible via cette API.</p>
+                </div>
+            `;
+            this.elements.allTimeHigh.textContent = 'Aucune donnée disponible';
+            this.elements.allTimeHighDate.textContent = '';
+            this.elements.sharedAllTimeHigh.textContent = 'Aucune donnée disponible';
+            this.elements.sharedAllTimeHighDate.textContent = 'L\'API ne fournit que les données des Hype Trains actifs ou récents';
             return;
         }
 
         const hypeTrainData = statusData[0];
+        console.log('📊 Premier Hype Train:', hypeTrainData);
         
         // Vérifie si un Hype Train est en cours
         const isActive = hypeTrainData.expires_at && new Date(hypeTrainData.expires_at) > new Date();
+        console.log('⏰ Hype Train actif?', isActive);
         
         if (isActive) {
             this.displayCurrentTrain(hypeTrainData);
@@ -264,13 +286,18 @@ class UI {
             const goal = hypeTrainData.goal || 0;
             const progress = hypeTrainData.progress || 0;
             
-            this.elements.allTimeHigh.textContent = `Niveau ${level} - ${progress}/${goal} points`;
-            this.elements.allTimeHighDate.textContent = `Dernière mise à jour: ${new Date(hypeTrainData.started_at || Date.now()).toLocaleString('fr-FR')}`;
+            this.elements.allTimeHigh.textContent = `Niveau ${level} (${progress}/${goal} points)`;
+            this.elements.allTimeHighDate.textContent = hypeTrainData.started_at 
+                ? `Dernier Hype Train: ${new Date(hypeTrainData.started_at).toLocaleString('fr-FR')}`
+                : 'Date inconnue';
+        } else {
+            this.elements.allTimeHigh.textContent = 'Données incomplètes';
+            this.elements.allTimeHighDate.textContent = '';
         }
 
         // Note: L'API ne fournit pas directement shared_all_time_high
-        this.elements.sharedAllTimeHigh.textContent = 'Niveau maximum atteint';
-        this.elements.sharedAllTimeHighDate.textContent = 'Données agrégées non disponibles via l\'API actuelle';
+        this.elements.sharedAllTimeHigh.textContent = 'Non disponible';
+        this.elements.sharedAllTimeHighDate.textContent = 'L\'API actuelle ne fournit pas l\'historique complet des records';
     }
 
     // Affiche le train en cours (nouvelle structure API)
@@ -287,34 +314,35 @@ class UI {
                 <div class="train-stats">
                     <div class="stat">
                         <span class="stat-label">Niveau</span>
-                        <span class="stat-value">${data.level}</span>
+                        <span class="stat-value">${data.level || 'N/A'}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Progression</span>
-                        <span class="stat-value">${data.progress}/${data.goal}</span>
+                        <span class="stat-value">${data.progress || 0}/${data.goal || 0}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Contributeurs</span>
                         <span class="stat-value">${data.top_contributions?.length || 0}</span>
                     </div>
                 </div>
-                ${this.renderProgressBar(data.progress, data.goal)}
+                ${data.goal && data.progress ? this.renderProgressBar(data.progress, data.goal) : ''}
             </div>
         `;
     }
 
     // Affiche le dernier train terminé (nouvelle structure API)
     displayLastTrain(data) {
+        const endDate = data.ended_at || data.started_at;
         this.elements.currentTrainContent.innerHTML = `
             <div class="current-train completed">
                 <div class="train-header">
                     <span class="badge badge-secondary">TERMINÉ</span>
-                    <span class="train-time">${new Date(data.ended_at || data.started_at).toLocaleString('fr-FR')}</span>
+                    <span class="train-time">${endDate ? new Date(endDate).toLocaleString('fr-FR') : 'Date inconnue'}</span>
                 </div>
                 <div class="train-stats">
                     <div class="stat">
                         <span class="stat-label">Niveau atteint</span>
-                        <span class="stat-value">${data.level}</span>
+                        <span class="stat-value">${data.level || 'N/A'}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Points finaux</span>
@@ -354,13 +382,13 @@ class App {
     }
 
     async init() {
-        console.log('Initialisation de l\'application...');
-        console.log('Client ID configuré:', !!CONFIG.clientId);
-        console.log('Redirect URI:', CONFIG.redirectUri);
+        console.log('🚀 Initialisation de l\'application...');
+        console.log('🔑 Client ID configuré:', !!CONFIG.clientId);
+        console.log('🔗 Redirect URI:', CONFIG.redirectUri);
 
         // Gestion des événements
         this.ui.elements.loginBtn.addEventListener('click', () => {
-            console.log('Bouton de connexion cliqué');
+            console.log('🖱️ Bouton de connexion cliqué');
             if (!CONFIG.clientId) {
                 this.ui.showError('Erreur de configuration: Client ID Twitch non défini. Veuillez créer un fichier config.js à partir de config.template.js et y ajouter votre Client ID.');
                 return;
@@ -372,10 +400,10 @@ class App {
 
         // Vérifie l'authentification
         if (this.auth.handleCallback()) {
-            console.log('Token trouvé, authentification en cours...');
+            console.log('🎫 Token trouvé, authentification en cours...');
             await this.handleAuthenticated();
         } else {
-            console.log('Pas de token, affichage de la page de connexion');
+            console.log('🔐 Pas de token, affichage de la page de connexion');
             this.ui.showLoginSection();
         }
     }
@@ -385,28 +413,33 @@ class App {
 
         try {
             // Valide le token
+            console.log('✅ Validation du token...');
             const isValid = await this.auth.validateToken();
             if (!isValid) {
                 throw new Error('Token invalide');
             }
 
             // Récupère les informations utilisateur
+            console.log('👤 Récupération des infos utilisateur...');
             const userInfo = await this.auth.getUserInfo();
             if (!userInfo) {
                 throw new Error('Impossible de récupérer les informations utilisateur');
             }
+            console.log('✅ Utilisateur:', userInfo.display_name);
 
             // Affiche les sections authentifiées
             this.ui.showAuthenticatedSections();
             this.ui.displayUserInfo(userInfo);
 
             // Récupère les données Hype Train (nouvel endpoint)
+            console.log('🚂 Récupération des données Hype Train...');
             const statusData = await this.api.getHypeTrainStatus();
             this.ui.displayHypeTrainData(statusData);
 
             this.ui.hideLoading();
+            console.log('✅ Application initialisée avec succès!');
         } catch (error) {
-            console.error('Erreur:', error);
+            console.error('💥 Erreur:', error);
             this.ui.hideLoading();
             this.ui.showError(`Erreur: ${error.message}`);
             
@@ -418,6 +451,6 @@ class App {
 
 // Initialisation de l'application
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM chargé, démarrage de l\'application...');
+    console.log('📄 DOM chargé, démarrage de l\'application...');
     new App();
 });
