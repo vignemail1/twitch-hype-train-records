@@ -126,15 +126,15 @@ class HypeTrainAPI {
         this.auth = auth;
     }
 
-    // Récupère les événements Hype Train
-    async getHypeTrainEvents() {
+    // Récupère le statut du Hype Train (nouvel endpoint)
+    async getHypeTrainStatus() {
         if (!this.auth.isAuthenticated() || !this.auth.userId) {
             throw new Error('Non authentifié');
         }
 
         try {
             const response = await fetch(
-                `${CONFIG.apiBaseUrl}/hypetrain/events?broadcaster_id=${this.auth.userId}&first=1`,
+                `${CONFIG.apiBaseUrl}/hypetrain/status?broadcaster_id=${this.auth.userId}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${this.auth.accessToken}`,
@@ -151,7 +151,7 @@ class HypeTrainAPI {
             const data = await response.json();
             return data.data;
         } catch (error) {
-            console.error('Erreur lors de la récupération des Hype Trains:', error);
+            console.error('Erreur lors de la récupération du Hype Train:', error);
             throw error;
         }
     }
@@ -227,46 +227,43 @@ class UI {
         this.elements.userLogin.textContent = `@${userInfo.login}`;
     }
 
-    // Affiche les données du Hype Train
-    displayHypeTrainData(events) {
-        if (!events || events.length === 0) {
+    // Affiche les données du Hype Train avec la nouvelle structure API
+    displayHypeTrainData(statusData) {
+        if (!statusData || statusData.length === 0) {
             this.elements.currentTrainContent.innerHTML = '<p class="text-muted">Aucun Hype Train récent</p>';
             this.elements.allTimeHigh.textContent = 'Aucune donnée';
             this.elements.sharedAllTimeHigh.textContent = 'Aucune donnée';
             return;
         }
 
-        const latestEvent = events[0];
+        const hypeTrainData = statusData[0];
         
-        // Affiche le train en cours ou le dernier train
-        const isActive = latestEvent.event_data && latestEvent.event_data.expires_at && 
-                        new Date(latestEvent.event_data.expires_at) > new Date();
+        // Vérifie si un Hype Train est en cours
+        const isActive = hypeTrainData.expires_at && new Date(hypeTrainData.expires_at) > new Date();
         
         if (isActive) {
-            this.displayCurrentTrain(latestEvent);
+            this.displayCurrentTrain(hypeTrainData);
         } else {
-            this.displayLastTrain(latestEvent);
+            this.displayLastTrain(hypeTrainData);
         }
 
         // Affiche les records
-        if (latestEvent.event_data) {
-            const level = latestEvent.event_data.level || 1;
-            const goal = latestEvent.event_data.goal || 0;
-            const progress = latestEvent.event_data.progress || 0;
+        if (hypeTrainData.level !== undefined) {
+            const level = hypeTrainData.level || 1;
+            const goal = hypeTrainData.goal || 0;
+            const progress = hypeTrainData.progress || 0;
             
             this.elements.allTimeHigh.textContent = `Niveau ${level} - ${progress}/${goal} points`;
-            this.elements.allTimeHighDate.textContent = `Dernière mise à jour: ${new Date(latestEvent.event_timestamp).toLocaleString('fr-FR')}`;
+            this.elements.allTimeHighDate.textContent = `Dernière mise à jour: ${new Date(hypeTrainData.started_at || Date.now()).toLocaleString('fr-FR')}`;
         }
 
         // Note: L'API ne fournit pas directement shared_all_time_high
-        // Il faudrait agréger les données de plusieurs événements
         this.elements.sharedAllTimeHigh.textContent = 'Niveau maximum atteint';
         this.elements.sharedAllTimeHighDate.textContent = 'Données agrégées non disponibles via l\'API actuelle';
     }
 
-    // Affiche le train en cours
-    displayCurrentTrain(event) {
-        const data = event.event_data;
+    // Affiche le train en cours (nouvelle structure API)
+    displayCurrentTrain(data) {
         const expiresAt = new Date(data.expires_at);
         const timeRemaining = Math.floor((expiresAt - new Date()) / 1000);
 
@@ -295,15 +292,13 @@ class UI {
         `;
     }
 
-    // Affiche le dernier train terminé
-    displayLastTrain(event) {
-        const data = event.event_data;
-        
+    // Affiche le dernier train terminé (nouvelle structure API)
+    displayLastTrain(data) {
         this.elements.currentTrainContent.innerHTML = `
             <div class="current-train completed">
                 <div class="train-header">
                     <span class="badge badge-secondary">TERMINÉ</span>
-                    <span class="train-time">${new Date(event.event_timestamp).toLocaleString('fr-FR')}</span>
+                    <span class="train-time">${new Date(data.ended_at || data.started_at).toLocaleString('fr-FR')}</span>
                 </div>
                 <div class="train-stats">
                     <div class="stat">
@@ -394,9 +389,9 @@ class App {
             this.ui.showAuthenticatedSections();
             this.ui.displayUserInfo(userInfo);
 
-            // Récupère les données Hype Train
-            const events = await this.api.getHypeTrainEvents();
-            this.ui.displayHypeTrainData(events);
+            // Récupère les données Hype Train (nouvel endpoint)
+            const statusData = await this.api.getHypeTrainStatus();
+            this.ui.displayHypeTrainData(statusData);
 
             this.ui.hideLoading();
         } catch (error) {
