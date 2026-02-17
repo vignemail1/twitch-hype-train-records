@@ -30,3 +30,6 @@ build/
 # Cache
 .cache/
 .vercel
+
+# Configuration locale (ne doit pas être commitée)
+config.js
