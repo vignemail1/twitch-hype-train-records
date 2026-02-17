@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitch Hype Train Records</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚂 Twitch Hype Train Records</h1>
+            <p class="subtitle">Suivez l'historique de vos Hype Trains</p>
+        </header>
+
+        <main>
+            <!-- Section de connexion -->
+            <div id="login-section" class="section">
+                <div class="card">
+                    <h2>Connexion requise</h2>
+                    <p>Connectez-vous avec votre compte Twitch pour consulter vos statistiques de Hype Train.</p>
+                    <button id="login-btn" class="btn btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>
+                        </svg>
+                        Se connecter avec Twitch
+                    </button>
+                </div>
+            </div>
+
+            <!-- Section de profil utilisateur -->
+            <div id="user-section" class="section hidden">
+                <div class="card user-card">
+                    <div class="user-info">
+                        <img id="user-avatar" src="" alt="Avatar" class="avatar">
+                        <div>
+                            <h3 id="user-name">Chargement...</h3>
+                            <p id="user-login" class="text-muted"></p>
+                        </div>
+                    </div>
+                    <button id="logout-btn" class="btn btn-secondary">Déconnexion</button>
+                </div>
+            </div>
+
+            <!-- Section du Hype Train en cours -->
+            <div id="current-train-section" class="section hidden">
+                <div class="card">
+                    <h2>🎉 Hype Train en cours</h2>
+                    <div id="current-train-content">
+                        <p class="text-muted">Aucun Hype Train en cours actuellement</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section des records -->
+            <div id="records-section" class="section hidden">
+                <div class="card">
+                    <h2>🏆 Records</h2>
+                    <div id="records-content">
+                        <div class="record-item">
+                            <h3>All-Time High</h3>
+                            <p id="all-time-high" class="record-value">Chargement...</p>
+                            <p id="all-time-high-date" class="text-muted"></p>
+                        </div>
+                        <div class="record-item">
+                            <h3>Shared All-Time High</h3>
+                            <p id="shared-all-time-high" class="record-value">Chargement...</p>
+                            <p id="shared-all-time-high-date" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section d'erreur -->
+            <div id="error-section" class="section hidden">
+                <div class="card error-card">
+                    <h3>❌ Erreur</h3>
+                    <p id="error-message"></p>
+                </div>
+            </div>
+
+            <!-- Indicateur de chargement -->
+            <div id="loading-section" class="section hidden">
+                <div class="loading-spinner"></div>
+                <p class="text-muted">Chargement des données...</p>
+            </div>
+        </main>
+
+        <footer>
+            <p>Développé avec l'API Twitch Helix | <a href="https://dev.twitch.tv/docs/api/reference#get-hype-train-events" target="_blank" rel="noopener">Documentation API</a></p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
