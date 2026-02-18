@@ -2,6 +2,10 @@
 
 Application web permettant aux streameurs Twitch de consulter l'historique de leurs Hype Trains via l'API Helix de Twitch.
 
+Cela ne fonctionne QUE pour le streamer pour sa propre chaine, c'est une restriction de l'API Helix de Twitch.
+
+Cette application web a été développé car Twitch ne propose pas de vue sur son historique Train de la Hype en dehors d'une événement Train de la Hype en cours.
+
 ## ✨ Fonctionnalités
 
 - **Authentification Twitch OAuth** : Connexion sécurisée via votre compte Twitch
@@ -112,7 +116,7 @@ npx serve
 
 ## 👾 Structure du projet
 
-```
+```text
 twitch-hype-train-record/
 ├── index.html           # Page principale
 ├── app.js               # Logique applicative
@@ -126,8 +130,8 @@ twitch-hype-train-record/
 
 ## 📝 TODO
 
-- [ ] Mise en place du CI/CD avec GitHub Actions
-- [ ] Historique complet des Hype Trains
+- [x] Mise en place du CI/CD avec GitHub Actions
+- [x] Historique complet des Hype Trains
 - [ ] Graphiques de statistiques
 - [ ] Export des données en CSV
 - [ ] Mode sombre/clair
@@ -140,10 +144,6 @@ MIT
 ## 👤 Auteur
 
 vignemail1
-
-## 🤝 Contribution
-
-Les contributions sont les bienvenues ! N'hésitez pas à ouvrir une issue ou une pull request.
 
 ---
 
