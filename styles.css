@@ -11,6 +11,7 @@
     --border-color: #2d2d35;
     --error-color: #ec1818;
     --info-color: #4a9eff;
+    --privacy-color: #00b894;
 }
 
 * {
@@ -52,6 +53,47 @@ header h1 {
 .subtitle {
     color: var(--text-secondary);
     font-size: 1.1rem;
+}
+
+/* Bandeau de confidentialité */
+.privacy-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background: linear-gradient(135deg, rgba(0, 184, 148, 0.15) 0%, rgba(0, 184, 148, 0.05) 100%);
+    border: 2px solid var(--privacy-color);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 184, 148, 0.2);
+}
+
+.privacy-icon {
+    font-size: 1.8rem;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.privacy-content {
+    flex: 1;
+}
+
+.privacy-content strong {
+    color: var(--privacy-color);
+    font-size: 1.1rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.privacy-content p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.privacy-content strong:not(:first-child) {
+    color: var(--text-primary);
 }
 
 .section {
@@ -517,5 +559,14 @@ footer a:hover {
     
     .equivalence-list {
         grid-template-columns: 1fr;
+    }
+    
+    .privacy-banner {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .privacy-icon {
+        font-size: 2.5rem;
     }
 }
