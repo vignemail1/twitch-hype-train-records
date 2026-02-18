@@ -55,8 +55,8 @@ header h1 {
     font-size: 1.1rem;
 }
 
-/* Bandeau de confidentialité */
-.privacy-banner {
+/* Bandeau de confidentialité (renommé pour éviter les adblockers) */
+.security-notice {
     display: flex;
     align-items: flex-start;
     gap: 1rem;
@@ -68,31 +68,31 @@ header h1 {
     box-shadow: 0 4px 12px rgba(0, 184, 148, 0.2);
 }
 
-.privacy-icon {
+.security-notice-icon {
     font-size: 1.8rem;
     flex-shrink: 0;
     line-height: 1;
 }
 
-.privacy-content {
+.security-notice-content {
     flex: 1;
 }
 
-.privacy-content strong {
+.security-notice-content strong {
     color: var(--privacy-color);
     font-size: 1.1rem;
     display: block;
     margin-bottom: 0.5rem;
 }
 
-.privacy-content p {
+.security-notice-content p {
     color: var(--text-secondary);
     font-size: 0.9rem;
     line-height: 1.6;
     margin: 0;
 }
 
-.privacy-content strong:not(:first-child) {
+.security-notice-content strong:not(:first-child) {
     color: var(--text-primary);
 }
 
@@ -561,12 +561,12 @@ footer a:hover {
         grid-template-columns: 1fr;
     }
     
-    .privacy-banner {
+    .security-notice {
         flex-direction: column;
         text-align: center;
     }
     
-    .privacy-icon {
+    .security-notice-icon {
         font-size: 2.5rem;
     }
 }
