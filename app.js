@@ -7,6 +7,14 @@ const CONFIG = {
     apiBaseUrl: 'https://api.twitch.tv/helix'
 };
 
+// Valeurs de conversion Twitch Hype Train (officielles)
+const HYPE_TRAIN_POINTS = {
+    BITS: 1,        // 1 bit = 1 point
+    TIER_1: 500,    // 1 sub T1 = 500 points
+    TIER_2: 1000,   // 1 sub T2 = 1000 points
+    TIER_3: 2500    // 1 sub T3 = 2500 points
+};
+
 // Classe pour gérer l'authentification Twitch
 class TwitchAuth {
     constructor() {
@@ -168,6 +176,37 @@ class HypeTrainAPI {
     }
 }
 
+// Classe utilitaire pour les conversions
+class HypeTrainConverter {
+    // Convertit des points en équivalences
+    static convertPoints(points) {
+        return {
+            bits: points,
+            tier1: Math.floor(points / HYPE_TRAIN_POINTS.TIER_1),
+            tier2: Math.floor(points / HYPE_TRAIN_POINTS.TIER_2),
+            tier3: Math.floor(points / HYPE_TRAIN_POINTS.TIER_3)
+        };
+    }
+
+    // Formate l'équivalence pour l'affichage
+    static formatEquivalence(points) {
+        if (!points || points === 0) return '';
+        
+        const equiv = this.convertPoints(points);
+        return `
+            <div class="equivalence">
+                <p class="equivalence-title">💰 Équivalence:</p>
+                <ul class="equivalence-list">
+                    <li><strong>${equiv.bits.toLocaleString('fr-FR')}</strong> Bits</li>
+                    <li><strong>${equiv.tier1}</strong> Subs Tier 1</li>
+                    <li><strong>${equiv.tier2}</strong> Subs Tier 2</li>
+                    <li><strong>${equiv.tier3}</strong> Subs Tier 3</li>
+                </ul>
+            </div>
+        `;
+    }
+}
+
 // Classe pour gérer l'interface utilisateur
 class UI {
     constructor() {
@@ -288,23 +327,27 @@ class UI {
             this.elements.currentTrainContent.innerHTML = '<p class="text-muted">Aucun Hype Train en cours actuellement</p>';
         }
 
-        // Affiche les records all-time high
+        // Affiche les records all-time high avec équivalence
         if (allTimeHigh) {
-            this.elements.allTimeHigh.textContent = `Niveau ${allTimeHigh.level} - ${allTimeHigh.total} points`;
-            this.elements.allTimeHighDate.textContent = allTimeHigh.achieved_at 
-                ? `Atteint le: ${new Date(allTimeHigh.achieved_at).toLocaleString('fr-FR')}`
-                : 'Date inconnue';
+            this.elements.allTimeHigh.textContent = `Niveau ${allTimeHigh.level} - ${allTimeHigh.total.toLocaleString('fr-FR')} points`;
+            const equivalenceHTML = HypeTrainConverter.formatEquivalence(allTimeHigh.total);
+            this.elements.allTimeHighDate.innerHTML = `
+                ${allTimeHigh.achieved_at ? `Atteint le: ${new Date(allTimeHigh.achieved_at).toLocaleString('fr-FR')}` : 'Date inconnue'}
+                ${equivalenceHTML}
+            `;
         } else {
             this.elements.allTimeHigh.textContent = 'Aucun record personnel';
             this.elements.allTimeHighDate.textContent = 'Votre chaîne n\'a pas encore eu de Hype Train';
         }
 
-        // Affiche les records shared all-time high
+        // Affiche les records shared all-time high avec équivalence
         if (sharedAllTimeHigh) {
-            this.elements.sharedAllTimeHigh.textContent = `Niveau ${sharedAllTimeHigh.level} - ${sharedAllTimeHigh.total} points`;
-            this.elements.sharedAllTimeHighDate.textContent = sharedAllTimeHigh.achieved_at 
-                ? `Atteint le: ${new Date(sharedAllTimeHigh.achieved_at).toLocaleString('fr-FR')}`
-                : 'Date inconnue';
+            this.elements.sharedAllTimeHigh.textContent = `Niveau ${sharedAllTimeHigh.level} - ${sharedAllTimeHigh.total.toLocaleString('fr-FR')} points`;
+            const equivalenceHTML = HypeTrainConverter.formatEquivalence(sharedAllTimeHigh.total);
+            this.elements.sharedAllTimeHighDate.innerHTML = `
+                ${sharedAllTimeHigh.achieved_at ? `Atteint le: ${new Date(sharedAllTimeHigh.achieved_at).toLocaleString('fr-FR')}` : 'Date inconnue'}
+                ${equivalenceHTML}
+            `;
         } else {
             this.elements.sharedAllTimeHigh.textContent = 'Aucun record partagé';
             this.elements.sharedAllTimeHighDate.textContent = 'Aucune participation à un Hype Train partagé';
@@ -361,6 +404,9 @@ class UI {
             `
             : '';
 
+        // Équivalence pour le total de points
+        const totalEquivalence = HypeTrainConverter.formatEquivalence(current.total);
+
         this.elements.currentTrainContent.innerHTML = `
             <div class="current-train active">
                 <div class="train-header">
@@ -378,10 +424,11 @@ class UI {
                     </div>
                     <div class="stat">
                         <span class="stat-label">Total</span>
-                        <span class="stat-value">${current.total} points</span>
+                        <span class="stat-value">${current.total.toLocaleString('fr-FR')} points</span>
                     </div>
                 </div>
                 ${this.renderProgressBar(current.progress, current.goal)}
+                ${totalEquivalence}
                 ${contributorsHTML}
             </div>
         `;
@@ -389,6 +436,8 @@ class UI {
 
     // Affiche le dernier train terminé
     displayLastTrain(current) {
+        const totalEquivalence = HypeTrainConverter.formatEquivalence(current.total);
+        
         this.elements.currentTrainContent.innerHTML = `
             <div class="current-train completed">
                 <div class="train-header">
@@ -402,9 +451,10 @@ class UI {
                     </div>
                     <div class="stat">
                         <span class="stat-label">Points totaux</span>
-                        <span class="stat-value">${current.total}</span>
+                        <span class="stat-value">${current.total.toLocaleString('fr-FR')}</span>
                     </div>
                 </div>
+                ${totalEquivalence}
             </div>
         `;
     }
