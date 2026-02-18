@@ -248,7 +248,7 @@ class UI {
         this.elements.userLogin.textContent = `@${userInfo.login}`;
     }
 
-    // Affiche les données du Hype Train avec la nouvelle structure API
+    // Affiche les données du Hype Train avec la structure API correcte
     displayHypeTrainData(statusData) {
         console.log('🎨 Affichage des données Hype Train:', statusData);
         
@@ -270,40 +270,68 @@ class UI {
         const hypeTrainData = statusData[0];
         console.log('📊 Premier Hype Train:', hypeTrainData);
         
-        // Vérifie si un Hype Train est en cours
-        const isActive = hypeTrainData.expires_at && new Date(hypeTrainData.expires_at) > new Date();
-        console.log('⏰ Hype Train actif?', isActive);
+        // La structure correcte: data[0].current, data[0].all_time_high, data[0].shared_all_time_high
+        const current = hypeTrainData.current;
+        const allTimeHigh = hypeTrainData.all_time_high;
+        const sharedAllTimeHigh = hypeTrainData.shared_all_time_high;
         
-        if (isActive) {
-            this.displayCurrentTrain(hypeTrainData);
+        // Vérifie si un Hype Train est en cours
+        if (current) {
+            const isActive = current.expires_at && new Date(current.expires_at) > new Date();
+            console.log('⏰ Hype Train actif?', isActive);
+            
+            if (isActive) {
+                this.displayCurrentTrain(current);
+            } else {
+                this.displayLastTrain(current);
+            }
         } else {
-            this.displayLastTrain(hypeTrainData);
+            this.elements.currentTrainContent.innerHTML = '<p class="text-muted">Aucun Hype Train en cours</p>';
         }
 
-        // Affiche les records
-        if (hypeTrainData.level !== undefined) {
-            const level = hypeTrainData.level || 1;
-            const goal = hypeTrainData.goal || 0;
-            const progress = hypeTrainData.progress || 0;
-            
-            this.elements.allTimeHigh.textContent = `Niveau ${level} (${progress}/${goal} points)`;
-            this.elements.allTimeHighDate.textContent = hypeTrainData.started_at 
-                ? `Dernier Hype Train: ${new Date(hypeTrainData.started_at).toLocaleString('fr-FR')}`
+        // Affiche les records all-time high
+        if (allTimeHigh) {
+            this.elements.allTimeHigh.textContent = `Niveau ${allTimeHigh.level} - ${allTimeHigh.total} points`;
+            this.elements.allTimeHighDate.textContent = allTimeHigh.achieved_at 
+                ? `Atteint le: ${new Date(allTimeHigh.achieved_at).toLocaleString('fr-FR')}`
                 : 'Date inconnue';
         } else {
-            this.elements.allTimeHigh.textContent = 'Données incomplètes';
+            this.elements.allTimeHigh.textContent = 'Aucun record personnel';
             this.elements.allTimeHighDate.textContent = '';
         }
 
-        // Note: L'API ne fournit pas directement shared_all_time_high
-        this.elements.sharedAllTimeHigh.textContent = 'Non disponible';
-        this.elements.sharedAllTimeHighDate.textContent = 'L\'API actuelle ne fournit pas l\'historique complet des records';
+        // Affiche les records shared all-time high
+        if (sharedAllTimeHigh) {
+            this.elements.sharedAllTimeHigh.textContent = `Niveau ${sharedAllTimeHigh.level} - ${sharedAllTimeHigh.total} points`;
+            this.elements.sharedAllTimeHighDate.textContent = sharedAllTimeHigh.achieved_at 
+                ? `Atteint le: ${new Date(sharedAllTimeHigh.achieved_at).toLocaleString('fr-FR')}`
+                : 'Date inconnue';
+        } else {
+            this.elements.sharedAllTimeHigh.textContent = 'Aucun record partagé';
+            this.elements.sharedAllTimeHighDate.textContent = '';
+        }
     }
 
-    // Affiche le train en cours (nouvelle structure API)
-    displayCurrentTrain(data) {
-        const expiresAt = new Date(data.expires_at);
+    // Affiche le train en cours
+    displayCurrentTrain(current) {
+        const expiresAt = new Date(current.expires_at);
         const timeRemaining = Math.floor((expiresAt - new Date()) / 1000);
+
+        // Affiche les top contributeurs
+        const contributorsHTML = current.top_contributions && current.top_contributions.length > 0
+            ? `
+                <div class="contributors">
+                    <h4>🌟 Top Contributeurs</h4>
+                    <ul>
+                        ${current.top_contributions.map(contrib => `
+                            <li>
+                                <strong>${contrib.user_name}</strong>: ${contrib.total} ${contrib.type === 'bits' ? 'bits' : 'subs'}
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `
+            : '';
 
         this.elements.currentTrainContent.innerHTML = `
             <div class="current-train active">
@@ -314,39 +342,39 @@ class UI {
                 <div class="train-stats">
                     <div class="stat">
                         <span class="stat-label">Niveau</span>
-                        <span class="stat-value">${data.level || 'N/A'}</span>
+                        <span class="stat-value">${current.level}</span>
                     </div>
                     <div class="stat">
                         <span class="stat-label">Progression</span>
-                        <span class="stat-value">${data.progress || 0}/${data.goal || 0}</span>
+                        <span class="stat-value">${current.progress}/${current.goal}</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-label">Contributeurs</span>
-                        <span class="stat-value">${data.top_contributions?.length || 0}</span>
+                        <span class="stat-label">Total</span>
+                        <span class="stat-value">${current.total} points</span>
                     </div>
                 </div>
-                ${data.goal && data.progress ? this.renderProgressBar(data.progress, data.goal) : ''}
+                ${this.renderProgressBar(current.progress, current.goal)}
+                ${contributorsHTML}
             </div>
         `;
     }
 
-    // Affiche le dernier train terminé (nouvelle structure API)
-    displayLastTrain(data) {
-        const endDate = data.ended_at || data.started_at;
+    // Affiche le dernier train terminé
+    displayLastTrain(current) {
         this.elements.currentTrainContent.innerHTML = `
             <div class="current-train completed">
                 <div class="train-header">
                     <span class="badge badge-secondary">TERMINÉ</span>
-                    <span class="train-time">${endDate ? new Date(endDate).toLocaleString('fr-FR') : 'Date inconnue'}</span>
+                    <span class="train-time">${new Date(current.started_at).toLocaleString('fr-FR')}</span>
                 </div>
                 <div class="train-stats">
                     <div class="stat">
                         <span class="stat-label">Niveau atteint</span>
-                        <span class="stat-value">${data.level || 'N/A'}</span>
+                        <span class="stat-value">${current.level}</span>
                     </div>
                     <div class="stat">
-                        <span class="stat-label">Points finaux</span>
-                        <span class="stat-value">${data.progress || 0}</span>
+                        <span class="stat-label">Points totaux</span>
+                        <span class="stat-value">${current.total}</span>
                     </div>
                 </div>
             </div>
