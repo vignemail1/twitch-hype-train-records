@@ -252,18 +252,10 @@ class UI {
     displayHypeTrainData(statusData) {
         console.log('🎨 Affichage des données Hype Train:', statusData);
         
+        // Cas 1: Aucune donnée retournée (tableau vide)
         if (!statusData || statusData.length === 0) {
             console.log('ℹ️ Aucune donnée Hype Train disponible');
-            this.elements.currentTrainContent.innerHTML = `
-                <div class="info-box">
-                    <p class="text-muted">ℹ️ Aucun Hype Train récent</p>
-                    <p class="text-small">L'API Twitch ne retourne que les Hype Trains en cours ou très récents. L'historique complet n'est pas disponible via cette API.</p>
-                </div>
-            `;
-            this.elements.allTimeHigh.textContent = 'Aucune donnée disponible';
-            this.elements.allTimeHighDate.textContent = '';
-            this.elements.sharedAllTimeHigh.textContent = 'Aucune donnée disponible';
-            this.elements.sharedAllTimeHighDate.textContent = 'L\'API ne fournit que les données des Hype Trains actifs ou récents';
+            this.displayNoHypeTrainData();
             return;
         }
 
@@ -275,7 +267,14 @@ class UI {
         const allTimeHigh = hypeTrainData.all_time_high;
         const sharedAllTimeHigh = hypeTrainData.shared_all_time_high;
         
-        // Vérifie si un Hype Train est en cours
+        // Cas 2: Données retournées mais tous les champs sont null (jamais eu de Hype Train)
+        if (!current && !allTimeHigh && !sharedAllTimeHigh) {
+            console.log('ℹ️ Compte sans historique de Hype Train');
+            this.displayNoHypeTrainHistory();
+            return;
+        }
+        
+        // Affiche le train en cours ou le dernier train
         if (current) {
             const isActive = current.expires_at && new Date(current.expires_at) > new Date();
             console.log('⏰ Hype Train actif?', isActive);
@@ -286,7 +285,7 @@ class UI {
                 this.displayLastTrain(current);
             }
         } else {
-            this.elements.currentTrainContent.innerHTML = '<p class="text-muted">Aucun Hype Train en cours</p>';
+            this.elements.currentTrainContent.innerHTML = '<p class="text-muted">Aucun Hype Train en cours actuellement</p>';
         }
 
         // Affiche les records all-time high
@@ -297,7 +296,7 @@ class UI {
                 : 'Date inconnue';
         } else {
             this.elements.allTimeHigh.textContent = 'Aucun record personnel';
-            this.elements.allTimeHighDate.textContent = '';
+            this.elements.allTimeHighDate.textContent = 'Votre chaîne n\'a pas encore eu de Hype Train';
         }
 
         // Affiche les records shared all-time high
@@ -308,8 +307,37 @@ class UI {
                 : 'Date inconnue';
         } else {
             this.elements.sharedAllTimeHigh.textContent = 'Aucun record partagé';
-            this.elements.sharedAllTimeHighDate.textContent = '';
+            this.elements.sharedAllTimeHighDate.textContent = 'Aucune participation à un Hype Train partagé';
         }
+    }
+
+    // Affiche un message quand aucune donnée n'est disponible (API vide)
+    displayNoHypeTrainData() {
+        this.elements.currentTrainContent.innerHTML = `
+            <div class="info-box">
+                <p class="text-muted">ℹ️ Aucun Hype Train récent</p>
+                <p class="text-small">L'API Twitch ne retourne que les Hype Trains en cours ou très récents. L'historique complet n'est pas disponible via cette API.</p>
+            </div>
+        `;
+        this.elements.allTimeHigh.textContent = 'Aucune donnée disponible';
+        this.elements.allTimeHighDate.textContent = '';
+        this.elements.sharedAllTimeHigh.textContent = 'Aucune donnée disponible';
+        this.elements.sharedAllTimeHighDate.textContent = 'L\'API ne fournit que les données des Hype Trains actifs ou récents';
+    }
+
+    // Affiche un message quand le compte n'a jamais eu de Hype Train
+    displayNoHypeTrainHistory() {
+        this.elements.currentTrainContent.innerHTML = `
+            <div class="info-box">
+                <p class="text-muted">🚂 Aucun Hype Train trouvé</p>
+                <p class="text-small">Cette chaîne n'a jamais eu de Hype Train. Les Hype Trains se déclenchent automatiquement lorsque votre communauté est très active (subs, bits, etc.).</p>
+                <p class="text-small">Pour plus d'informations : <a href="https://help.twitch.tv/s/article/hype-train-guide" target="_blank" rel="noopener">Guide du Train de la Hype</a></p>
+            </div>
+        `;
+        this.elements.allTimeHigh.textContent = 'Aucun Hype Train enregistré';
+        this.elements.allTimeHighDate.textContent = 'Cette chaîne n\'a pas encore eu de Hype Train';
+        this.elements.sharedAllTimeHigh.textContent = 'Aucun Hype Train enregistré';
+        this.elements.sharedAllTimeHighDate.textContent = 'Cette chaîne n\'a pas encore participé à un Hype Train partagé';
     }
 
     // Affiche le train en cours
