@@ -9,8 +9,15 @@
 <body>
     <div class="container">
         <header>
-            <h1>🚂 Twitch Hype Train Records</h1>
-            <p class="subtitle">Suivez l'historique de vos Hype Trains</p>
+            <div class="header-content">
+                <div>
+                    <h1>🚂 Twitch Hype Train Records</h1>
+                    <p class="subtitle">Suivez l'historique de vos Hype Trains</p>
+                </div>
+                <button id="theme-toggle" class="theme-toggle" aria-label="Basculer le thème">
+                    <span class="theme-icon">🌙</span>
+                </button>
+            </div>
         </header>
 
         <!-- Bandeau de confidentialité visible en permanence -->
@@ -138,5 +145,6 @@
     <!-- Configuration doit être chargée avant app.js -->
     <script src="config.js"></script>
     <script src="app.js"></script>
+    <script src="theme.js"></script>
 </body>
 </html>
